@@ -30,7 +30,7 @@ transformer=transforms.Compose([
 
 
 
-#the opposite
+#the opposite for less labels
 
 test_path='/home/christos_sevastopoulos/Desktop/TOY_DATASET/TRAINING'
 train_path= '/home/christos_sevastopoulos/Desktop/TOY_DATASET/TESTING'
