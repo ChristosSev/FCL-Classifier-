@@ -1,4 +1,3 @@
-import os
 import numpy as np
 import torch
 import glob
@@ -17,8 +16,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from torchmetrics import ConfusionMatrix
 
-num_epochs=200
-
+num_epochs=3
 
 #checking for device
 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -34,9 +32,8 @@ transformer=transforms.Compose([
 ])
 
 
-
-train_path='/home/christos_sevastopoulos/Desktop/toy_dataset_stanford/Training'
-test_path= '/home/christos_sevastopoulos/Desktop/toy_dataset_stanford/Testing'
+train_path='/home/christos_sevastopoulos/Desktop/KATHARA/Clean_data/Dataset_her/train'
+test_path= '/home/christos_sevastopoulos/Desktop/KATHARA/Clean_data/Dataset_uc/val'
 
 
 train_loader=DataLoader(
@@ -45,7 +42,7 @@ train_loader=DataLoader(
 )
 test_loader=DataLoader(
     torchvision.datasets.ImageFolder(test_path,transform=transformer),
-    batch_size=128, shuffle=True
+    batch_size=64, shuffle=False
 )
 
 
@@ -59,13 +56,24 @@ print(train_count,test_count)
 
 #define the model
 
-model = torchvision.models.resnet18(pretrained = False).to(device)
+model = models.resnet34(pretrained=True)
+for param in model.parameters():
+    param.requires_grad = False
+
+num_ftrs = model.fc.in_features
+model.fc = nn.Linear(num_ftrs, 2)
+
+model.to(device)
 
 optimizer= SGD(model.parameters(),lr=0.001,weight_decay=0.0001)
 loss_function=nn.CrossEntropyLoss()
 
 
-# Model training and saving best model
+# for name, child in model.named_children():
+#     print(name)
+
+
+#Model training and saving best model
 
 best_accuracy = 0.0
 
@@ -131,13 +139,11 @@ for epoch in range(num_epochs):
 
 classes = ('Positive' , 'Negative')
 
-
-
 labels_list = np.array(labels_list)
 prediction_list = np.array(prediction_list)
 
-print(labels_list.shape)
-print(prediction_list.shape)
+#print(labels_list.shape)
+#print(prediction_list.shape)
 
 cm = confusion_matrix(labels_list,prediction_list)
 print(cm)
@@ -149,47 +155,48 @@ print(cm)
 
 
 
-import itertools
+# import itertools
+#
+#
+# def plot_confusion_matrix(cm,
+#                           classes,
+#                           normalize=False,
+#                           title='Confusion matrix',
+#                           cmap=plt.cm.Blues):
+#     """
+#     This function prints and plots the confusion matrix very prettily.
+#     Normalization can be applied by setting `normalize=True`.
+#     """
+#     if normalize:
+#         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+#         print("Normalized confusion matrix")
+#     else:
+#         print('Confusion matrix, without normalization')
+#
+#     plt.imshow(cm, interpolation='nearest', cmap=cmap)
+#     plt.title(title)
+#
+#     # Specify the tick marks and axis text
+#     tick_marks = np.arange(len(classes))
+#     plt.xticks(tick_marks, classes, rotation=90)
+#     plt.yticks(tick_marks, classes)
+#
+#     # The data formatting
+#     fmt = '.2f' if normalize else 'd'
+#     thresh = cm.max() / 2.
+#
+#     # Print the text of the matrix, adjusting text colour for display
+#     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+#         plt.text(j, i, format(cm[i, j], fmt),
+#                  horizontalalignment="center",
+#                  color="white" if cm[i, j] > thresh else "black")
+#
+#     plt.ylabel('True label')
+#     plt.xlabel('Predicted label')
+#     plt.tight_layout()
+#     plt.show()
+#
+#
+#
 
 
-def plot_confusion_matrix(cm,
-                          classes,
-                          normalize=False,
-                          title='Confusion matrix',
-                          cmap=plt.cm.Blues):
-    """
-    This function prints and plots the confusion matrix very prettily.
-    Normalization can be applied by setting `normalize=True`.
-    """
-    if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        print("Normalized confusion matrix")
-    else:
-        print('Confusion matrix, without normalization')
-
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
-
-    # Specify the tick marks and axis text
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=90)
-    plt.yticks(tick_marks, classes)
-
-    # The data formatting
-    fmt = '.2f' if normalize else 'd'
-    thresh = cm.max() / 2.
-
-    # Print the text of the matrix, adjusting text colour for display
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, format(cm[i, j], fmt),
-                 horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
-
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-    plt.tight_layout()
-    plt.show()
-
-
-
-plot_confusion_matrix(cm, classes)
